@@ -6,18 +6,17 @@
 class Chip8 {
 
 private:
-  uint8_t   ram[4096];
-  bool   display[64 * 32];
-  uint16_t  pc;
-  uint16_t  stack[16];
-  uint8_t   sp;
-  uint16_t  I;
-  uint16_t  delayTimer;
-  uint16_t  soundTimer;
-  uint16_t  V[16];
+  uint8_t   ram[4096]{};
+  uint16_t  pc{};
+  uint16_t  stack[16]{};
+  uint8_t   sp{};
+  uint16_t  I{};
+  uint16_t  delayTimer{};
+  uint16_t  soundTimer{};
+  uint16_t  V[16]{};
   uint16_t  opcode;
-  bool      keys[16];
-  bool      shiftInPlace;
+  
+  bool      shiftInPlace = true;
   std::default_random_engine randGen;
 	std::uniform_int_distribution<uint8_t> randByte;
 
@@ -26,6 +25,8 @@ public:
   ~Chip8();
   void cycle();
   bool load(const char* filename);
+  uint8_t  keys[16]{};
+  uint32_t  display[64 * 32]{};
 
 
 private:

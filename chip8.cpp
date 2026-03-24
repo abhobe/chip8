@@ -1,4 +1,4 @@
-#include <chip8.h>
+#include "chip8.h"
 #include <cstdio>
 #include <cstring>
 
@@ -302,21 +302,24 @@ void Chip8::xCXNN() {
 
 
 // DXYN - DRW Vx, Vy, nibble (display n-byte sprite starting at memory location I at (Vx, Vy), set VF = collision)
-// TODO: review this
 void Chip8::xDXYN() {
   const uint8_t x = V[rX()] & 63;
   const uint8_t y = V[rY()] & 31;
   const uint8_t n = rN();
   V[0xF] = 0;
 
-  for (int j = 0; j<n && y+j<32; j++) {
+
+  // TODO: hacky fix, don't really undersand what's going on here, review this
+  for (int j = 0; j<n; j++) {
     uint8_t byte = ram[I + j];
-    for (int k = 0; k<8 && x+k<64; k++) {
+    for (int k = 0; k<8; k++) {
       // 0x80u = 0b10000000u (shift k mask)
       bool pixel = (byte & (0x80u >> k)) != 0;
-      uint16_t index = ((y + j) % 32) * 64 + ((x + k) % 64);
-      if (pixel && display[index]) V[0xF] = 1; // collision
-      display[index] ^= pixel;
+      uint16_t index = (y + j) * 64 + (x + k);
+      if (pixel) {
+				if (display[index] == 0xFFFFFFFF) V[0xF] = 1; // collision for 32-bit display
+				display[index] ^= 0xFFFFFFFF;
+			}
     }
   }
 }
