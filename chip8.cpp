@@ -41,6 +41,38 @@ Chip8::Chip8() : randGen(std::chrono::system_clock::now().time_since_epoch().cou
 Chip8::~Chip8() {
 }
 
+void Chip8::cycle() {
+  opcode = (ram[pc] << 8u) | ram[pc + 1];
+  execute();
+  if (delayTimer > 0) delayTimer--;
+  if (soundTimer > 0) soundTimer--;
+  pc += 2;
+}
+
+
+void Chip8::execute() {
+  const uint8_t nibble  = (opcode & 0xF000u) >> 12u;
+  
+  switch (nibble) {
+    case 0x0: x00QQ(); break; // 00E0 and 00EE
+    case 0x1: x1NNN(); break;
+    case 0x2: x2NNN(); break;
+    case 0x3: x3XNN(); break;
+    case 0x4: x4XNN(); break;
+    case 0x5: x5XY0(); break;
+    case 0x6: x6XNN(); break;
+    case 0x7: x7XNN(); break;
+    case 0x8: x8XYQ(); break; // 8XY0-8XYE
+    case 0x9: x9XY0(); break;
+    case 0xA: xANNN(); break;
+    case 0xB: xBNNN(); break;
+    case 0xC: xCXNN(); break;
+    case 0xD: xDXYN(); break;
+    case 0xE: xEXQQ(); break; // EX9E and EXA1
+    case 0xF: xFXQQ(); break; // FX07, FX0A, FX15, FX18, FX1E, FX29, FX33, FX55, and FX65
+  }
+}
+
 bool Chip8::load(const char* filename) {
   FILE* file = fopen(filename, "rb");
   if (!file) {
@@ -76,6 +108,15 @@ uint8_t Chip8::rNN() {
 
 uint8_t Chip8::rN() {
   return opcode & 0x000Fu;
+}
+
+// 00E0/00EE - Machine language/Clear/Return dispatcher
+void Chip8::x00QQ() {
+  const uint8_t last = opcode & 0x00FFu;
+  switch (last) {
+    case 0xE0: x00E0(); break;
+    case 0xEE: x00EE(); break;
+  }
 }
 
 // 00E0 - CLS
@@ -153,6 +194,22 @@ void Chip8::x7XNN() {
   V[x] += byte;
 }
 
+
+void Chip8::x8XYQ() {
+  const uint8_t last = opcode & 0x000Fu;
+  switch (last) {
+    case 0x0: x8XY0(); break;
+    case 0x1: x8XY1(); break;
+    case 0x2: x8XY2(); break;
+    case 0x3: x8XY3(); break;
+    case 0x4: x8XY4(); break;
+    case 0x5: x8XY5(); break;
+    case 0x6: x8XY6(); break;
+    case 0x7: x8XY7(); break;
+    case 0xE: x8XYE(); break;
+  }
+}
+
 // 8XY0 - LD Vx, Vy (set Vx = Vy)
 void Chip8::x8XY0() {
   uint8_t x = rX();
@@ -186,7 +243,7 @@ void Chip8::x8XY4() {
   const uint8_t x = rX();
   const uint8_t y = rY();
   uint16_t sum = V[x] + V[y];
-  V[0xF] = (sum > 255) ? 1 : 0; // carry
+  V[0xF] = (sum > 255u) ? 1 : 0; // carry
   V[x] = sum & 0xFFu;
 }
 
@@ -245,6 +302,7 @@ void Chip8::xCXNN() {
 
 
 // DXYN - DRW Vx, Vy, nibble (display n-byte sprite starting at memory location I at (Vx, Vy), set VF = collision)
+// TODO: review this
 void Chip8::xDXYN() {
   const uint8_t x = V[rX()] & 63;
   const uint8_t y = V[rY()] & 31;
@@ -279,6 +337,14 @@ void Chip8::xEXA1() {
   }
 }
 
+// EX9E/EXA1 - Key operations dispatcher
+void Chip8::xEXQQ() {
+  const uint8_t last = opcode & 0x00FFu;
+  switch (last) {
+    case 0x9E: xEX9E(); break;
+    case 0xA1: xEXA1(); break;
+  }
+}
 
 // FX07 - LD Vx, DT (set Vx = delay timer value)
 void Chip8::xFX07() {
@@ -348,5 +414,21 @@ void Chip8::xFX65() {
   const uint8_t x = rX();
   for (int i = 0; i <= x; i++) {
     V[i] = ram[I + i];
+  }
+}
+
+// FX07-FX65 - Various F instructions dispatcher
+void Chip8::xFXQQ() {
+  const uint8_t last = opcode & 0x00FFu;
+  switch (last) {
+    case 0x07: xFX07(); break;
+    case 0x0A: xFX0A(); break;
+    case 0x15: xFX15(); break;
+    case 0x18: xFX18(); break;
+    case 0x1E: xFX1E(); break;
+    case 0x29: xFX29(); break;
+    case 0x33: xFX33(); break;
+    case 0x55: xFX55(); break;
+    case 0x65: xFX65(); break;
   }
 }

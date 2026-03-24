@@ -23,22 +23,24 @@ private:
 
 public:
   Chip8();
+  ~Chip8();
   void cycle();
   bool load(const char* filename);
 
 
+private:
+  void execute();
   uint8_t rX();
   uint8_t rY();
   uint16_t rNNN();
   uint8_t rNN();
   uint8_t rN();
 
+  void x00QQ();
   void x00E0();
-  void x1NNN();
-
-  void x2NNN();
   void x00EE();
-
+  void x1NNN();
+  void x2NNN();
   void x3XNN();
   void x4XNN();
   void x5XY0();
@@ -47,6 +49,7 @@ public:
   void x6XNN();
   void x7XNN();
 
+  void x8XYQ();
   void x8XY0();
   void x8XY1();
   void x8XY2();
@@ -62,9 +65,11 @@ public:
   void xCXNN();
   void xDXYN();
 
+  void xEXQQ();
   void xEX9E();
   void xEXA1();
 
+  void xFXQQ();
   void xFX07();
   void xFX0A();
   void xFX15();
