@@ -27,6 +27,12 @@ public:
   bool load(const char* filename);
 
 
+  uint8_t rX();
+  uint8_t rY();
+  uint16_t rNNN();
+  uint8_t rNN();
+  uint8_t rN();
+
   void x00E0();
   void x1NNN();
 
